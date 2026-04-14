@@ -2,58 +2,94 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use App\Repository\PartRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Serializer\Attribute\Groups;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Doctrine\Orm\Filter\BooleanFilter;
+use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 
 #[ORM\Entity(repositoryClass: PartRepository::class)]
 #[ORM\Table(name: 'part')]
+#[ApiResource(
+    paginationItemsPerPage: 12,
+    operations: [
+        new GetCollection(),
+        new Get(),
+    ],
+    normalizationContext: ['groups' => ['part:read']]
+)]
+#[ApiFilter(SearchFilter::class, properties: [
+    'brand' => 'exact',
+    'category' => 'exact',
+    'name' => 'partial'
+])]
+
+#[ApiFilter(BooleanFilter::class, properties: ['isAvailable'])]
+#[ApiFilter(OrderFilter::class, properties: ['price'])]
+
 class Part
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['part:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 150)]
     #[Assert\NotBlank(message: 'Le nom de la pièce est obligatoire.')]
     #[Assert\Length(max: 150, maxMessage: 'Le nom ne peut pas dépasser {{ limit }} caractères.')]
+    #[Groups(['part:read', 'brand:read', 'category:read'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 100, unique: true)]
     #[Assert\NotBlank(message: 'La référence est obligatoire.')]
+    #[Groups(['part:read'])]
     private ?string $reference = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
+    #[Groups(['part:read'])]
     private ?string $description = null;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
     #[Assert\NotNull(message: 'Le prix est obligatoire.')]
     #[Assert\PositiveOrZero(message: 'Le prix doit être positif ou nul.')]
+    #[Groups(['part:read'])]
     private ?string $price = null;
 
     #[ORM\Column(type: 'integer')]
     #[Assert\NotNull(message: 'Le stock est obligatoire.')]
     #[Assert\PositiveOrZero(message: 'Le stock doit être positif ou nul.')]
+    #[Groups(['part:read'])]
     private ?int $stock = 0;
 
     #[ORM\Column(length: 50, nullable: true)]
+    #[Groups(['part:read'])]
     private ?string $part_condition = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['part:read'])]
     private ?bool $isAvailable = true;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['part:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\ManyToOne(inversedBy: 'parts')]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull(message: 'La marque est obligatoire.')]
+    #[Groups(['part:read'])]
     private ?Brand $brand = null;
 
     #[ORM\ManyToOne(inversedBy: 'parts')]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull(message: 'La catégorie est obligatoire.')]
+    #[Groups(['part:read'])]
     private ?Category $category = null;
 
     public function __construct()
