@@ -5,13 +5,27 @@ namespace App\DataFixtures;
 use App\Entity\Brand;
 use App\Entity\Category;
 use App\Entity\Part;
+use App\Entity\User;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class AppFixtures extends Fixture
 {
+    public function __construct(
+        private UserPasswordHasherInterface $hasher
+    )
+    { }
+
     public function load(ObjectManager $manager): void
     {
+        // Création de l'utilisateur de test
+        $user = new User();
+        $user->setEmail('admin@autopote.fr');
+        $user->setPassword($this->hasher->hashPassword($user,'password123'));
+        $user->setRoles(['ROLE_ADMIN']);
+        $manager->persist($user);
+
         // ── Marques ──────────────────────────────────────────────────────────
         $brandBosch = new Brand();
         $brandBosch->setName('Bosch');
